@@ -11,12 +11,15 @@ from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
 from torchvision import datasets, models
+from Model import Net
 
 
 
+mean = np.array([0.70756066,0.59119403,0.5465341 ])
+std = np.array([0.15324508,0.16183697,0.17682996])
 
-mean = np.array([0.485, 0.456, 0.406])
-std = np.array([0.229, 0.224, 0.225])
+mean_v = np.array([0.69324577,0.56011826,0.5092703 ])
+std_v = np.array([0.13990514,0.1405701,0.15759519])
 
 #'cuda:0' if torch.cuda.is_available() else
 device = torch.device('cpu')
@@ -29,13 +32,13 @@ device = torch.device('cpu')
 
 train_transfrom = transforms.Compose([transforms.Resize((256,256)),
                                      transforms.RandomHorizontalFlip(),
-                                     transforms.RandomRotation([90,45]),
+                                     transforms.RandomRotation(10),
                                      transforms.ToTensor(),
                                      transforms.Normalize(torch.Tensor(mean), torch.Tensor(std))])
 
 valid_transfrom = transforms.Compose([transforms.Resize((256,256)),
                                      transforms.ToTensor(),
-                                     transforms.Normalize(torch.Tensor(mean), torch.Tensor(std))])
+                                     transforms.Normalize(torch.Tensor(mean_v), torch.Tensor(std_v))])
 
 train_data = datasets.ImageFolder(root = "dataset\\train", transform = train_transfrom)
 trainloader = torch.utils.data.DataLoader(train_data,
@@ -46,7 +49,7 @@ trainloader = torch.utils.data.DataLoader(train_data,
 valid_data = datasets.ImageFolder(root = "dataset\\valid", transform = valid_transfrom)
 validloader = torch.utils.data.DataLoader(valid_data,
                                           batch_size=32,
-                                          shuffle=False,
+                                          shuffle=True,
                                           num_workers=0)
 
 
@@ -59,10 +62,15 @@ num_ftrs = model.fc.in_features
 
 model.fc = nn.Linear(num_ftrs, 2)
 
+#model = Net()
+
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adagrad(model.parameters())
+#criterion = nn.HingeEmbeddingLoss()
+
+optimizer = optim.Adagrad(model.parameters(),lr = 0.001)
+
 
 
 step_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 7, gamma = 0.1)
@@ -97,8 +105,6 @@ def train_model(model, criterion, optimizer, scheduler, SK = True, n_epochs=5):
              
             data_, target_ = data_.to(device), target_.to(device)    
             optimizer.zero_grad()
-            
-            print("Batch ground truth:",target_.numpy())
         
             outputs = model(data_)
             loss = criterion(outputs, target_)
@@ -108,7 +114,6 @@ def train_model(model, criterion, optimizer, scheduler, SK = True, n_epochs=5):
             running_loss += loss.item()
             _,pred = torch.max(outputs, dim=1)
             
-            print("Batch pred:",pred.numpy())
             correct += torch.sum(pred==target_).item()
             total += target_.size(0)
         
@@ -169,7 +174,7 @@ train_loss, val_loss = train_model(model,
                                        optimizer,
                                        step_lr_scheduler,
                                        SK = True,
-                                       n_epochs=5) 
+                                       n_epochs=2) 
 
 
 
@@ -196,7 +201,7 @@ train_loss, val_loss = train_model(model,
                                        optimizer,
                                        step_lr_scheduler,
                                        SK = False,
-                                       n_epochs=5) 
+                                       n_epochs=5)
 
         
 

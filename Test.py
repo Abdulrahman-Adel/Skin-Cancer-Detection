@@ -12,8 +12,8 @@ import torch
 from torch import nn
 
 
-mean = np.array([0.485, 0.456, 0.406])
-std = np.array([0.229, 0.224, 0.225])
+mean = np.array([0.7131744,0.550645,0.50956434])
+std = np.array([0.15762942,0.16314395,0.1775014 ])
 
 device = torch.device('cpu')
 
@@ -45,17 +45,10 @@ def Test_model(model, SK = True):
     with torch.no_grad():
         model.eval()
         predictions = []
-        for data_t, target_t in (testloader):
-            if SK:
-                target_t = np.array([1 if i == 2 else 0 for i in target_t.numpy()])
-                target_t = torch.tensor(target_t.astype(np.longlong))
-            else:
-                target_t = np.array([1 if i == 0 else 0 for i in target_t.numpy()])
-                target_t = torch.tensor(target_t.astype(np.longlong))
+        for data_t, _ in (testloader):
+            
                 
-                
-                     
-            data_t, target_t = data_t.to(device), target_t.to(device) 
+            data_t = data_t.to(device)
              
             
             outputs_t = model(data_t)
@@ -95,8 +88,8 @@ predictions_MM = Test_model(model, SK = False)
 ########################################
 
 submission = pd.DataFrame({"id":paths,
-                           "task_1":list(predictions_SK),
-                           "task_2":list(predictions_MM)})
+                           "task_1":list(predictions_MM),
+                           "task_2":list(predictions_SK)})
 
 
 submission.to_csv("submission.csv", index = False)
